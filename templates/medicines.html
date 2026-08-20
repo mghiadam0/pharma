@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}إدارة الأدوية - إدارة المخزون الطبي{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h5 class="page-title mb-0"><i class="fa-solid fa-pills me-1"></i> إدارة الأدوية</h5>
+  <a href="{{ url_for('add_medicine') }}" class="btn btn-brand btn-sm"><i class="fa-solid fa-plus"></i> دواء</a>
+</div>
+
+<form class="mb-3" method="get">
+  <div class="input-group">
+    <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="ابحث باسم الدواء">
+    <button class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i></button>
+  </div>
+</form>
+
+<div class="card p-2">
+  <div class="table-responsive">
+    <table class="table table-striped align-middle mb-0">
+      <thead>
+        <tr>
+          <th>اسم الدواء</th>
+          <th class="text-center">الكمية</th>
+          <th class="text-center">الحد الأدنى</th>
+          <th class="text-center">الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in medicines %}
+        <tr>
+          <td>
+            <div class="fw-semibold">{{ m.name }}</div>
+            {% if m.nearest_expire %}<div class="small text-muted">أقرب انتهاء: {{ m.nearest_expire.strftime('%d-%m-%Y') }}</div>{% endif %}
+          </td>
+          <td class="text-center">
+            <span class="badge {% if m.is_low %}bg-warning text-dark{% else %}bg-success{% endif %}">{{ m.total_quantity }}</span>
+          </td>
+          <td class="text-center">{{ m.min_stock }}</td>
+          <td class="text-center">
+            <div class="d-flex justify-content-center gap-1 flex-wrap">
+              <a class="btn btn-sm btn-success btn-icon" href="{{ url_for('add_batch', medicine_id=m.id) }}" title="إدخال كمية"><i class="fa-solid fa-plus"></i></a>
+              <a class="btn btn-sm btn-danger btn-icon" href="{{ url_for('dispense', medicine_id=m.id) }}" title="إخراج كمية"><i class="fa-solid fa-minus"></i></a>
+              <a class="btn btn-sm btn-outline-primary btn-icon" href="{{ url_for('medicine_batches', medicine_id=m.id) }}" title="الشحنات"><i class="fa-solid fa-boxes-stacked"></i></a>
+              <a class="btn btn-sm btn-outline-secondary btn-icon" href="{{ url_for('edit_medicine', medicine_id=m.id) }}" title="تعديل"><i class="fa-solid fa-pen"></i></a>
+              {% if current_user.role == 'admin' %}
+              <form method="post" action="{{ url_for('delete_medicine', medicine_id=m.id) }}" onsubmit="return confirm('حذف الدواء وجميع شحناته؟');">
+                <button class="btn btn-sm btn-outline-danger btn-icon" title="حذف"><i class="fa-solid fa-trash"></i></button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-muted py-3">لا توجد أدوية مسجلة.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,705 @@
+{% extends "base.html" %}
+{% block title %}إدخال كمية{% endblock %}
+{% block content %}
+<h5 class="page-title mb-3"><i class="fa-solid fa-boxes-packing me-1"></i> إدخال كمية (شحنة جديدة)</h5>
+<div class="card p-3">
+  {% if medicines %}
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label">الدواء</label>
+      <select name="medicine_id" class="form-select" required>
+        <option value="">-- اختر الدواء --</option>
+        {% for m in medicines %}
+        <option value="{{ m.id }}" {% if selected == m.id %}selected{% endif %}>{{ m.name }} (الكمية: {{ m.total_quantity }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">الكمية</label>
+      <input type="number" name="quantity" class="form-control" min="1" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">تاريخ انتهاء الصلاحية</label>
+      <input type="date" name="expire_date" class="form-control" required>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-brand"><i class="fa-solid fa-check me-1"></i>تأكيد الإدخال</button>
+      <a href="{{ url_for('medicines') }}" class="btn btn-outline-secondary">إلغاء</a>
+    </div>
+  </form>
+  {% else %}
+  <p class="text-muted mb-2">لا توجد أدوية بعد. أضف دواءً أولاً.</p>
+  <a href="{{ url_for('add_medicine') }}" class="btn btn-brand btn-sm">إضافة دواء</a>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% extends "base.html" %}
+{% block title %}إضافة دواء{% endblock %}
+{% block content %}
+<h5 class="page-title mb-3"><i class="fa-solid fa-plus me-1"></i> إضافة دواء</h5>
+<div class="card p-3">
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label">اسم الدواء</label>
+      <input type="text" name="name" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">الحد الأدنى للمخزون</label>
+      <input type="number" name="min_stock" class="form-control" min="0" value="0" required>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-brand"><i class="fa-solid fa-floppy-disk me-1"></i>حفظ</button>
+      <a href="{{ url_for('medicines') }}" class="btn btn-outline-secondary">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% extends "base.html" %}
+{% block title %}إضافة مستخدم{% endblock %}
+{% block content %}
+<h5 class="page-title mb-3"><i class="fa-solid fa-user-plus me-1"></i> إضافة مستخدم</h5>
+<div class="card p-3">
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label">اسم المستخدم</label>
+      <input type="text" name="username" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">كلمة المرور</label>
+      <input type="password" name="password" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">تأكيد كلمة المرور</label>
+      <input type="password" name="confirm" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">الصلاحية</label>
+      <select name="role" class="form-select">
+        <option value="user">مستخدم</option>
+        <option value="admin">مدير</option>
+      </select>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-brand"><i class="fa-solid fa-floppy-disk me-1"></i>حفظ</button>
+      <a href="{{ url_for('users') }}" class="btn btn-outline-secondary">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% extends "base.html" %}
+{% block title %}التنبيهات{% endblock %}
+{% block content %}
+<h5 class="page-title mb-3"><i class="fa-solid fa-bell me-1"></i> التنبيهات</h5>
+<div class="card p-3">
+  {% if alerts %}
+  <div class="small text-muted mb-2">تم اعتبار جميع التنبيهات مقروءة.</div>
+  <ul class="list-group list-group-flush">
+    {% for a in alerts %}
+    <li class="list-group-item px-0">
+      <span class="badge bg-{{ a.category }} me-1">{{ a.type }}</span>
+      <span>{{ a.text }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="text-muted mb-0">لا توجد تنبيهات حالياً.</p>
+  {% endif %}
+</div>
+{% endblock %}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}إدارة المخزون الطبي{% endblock %}</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+<style>
+  :root{ --brand:#0f766e; --brand-dark:#115e59; --soft:#f1f6f8; }
+  body{ background:var(--soft); font-family:"Segoe UI",Tahoma,sans-serif; padding-bottom:70px; }
+  .navbar{ background:var(--brand); }
+  .navbar .navbar-brand,.navbar .nav-link{ color:#fff !important; }
+  .card{ border:0; border-radius:14px; box-shadow:0 2px 10px rgba(15,118,110,.08); }
+  .stat-card .icon{ font-size:1.6rem; color:var(--brand); }
+  .stat-value{ font-size:1.6rem; font-weight:700; }
+  .btn-brand{ background:var(--brand); color:#fff; }
+  .btn-brand:hover{ background:var(--brand-dark); color:#fff; }
+  .table thead th{ background:var(--brand); color:#fff; font-size:.85rem; white-space:nowrap; }
+  .table td,.table th{ vertical-align:middle; font-size:.9rem; }
+  .btn-icon{ min-width:42px; min-height:40px; }
+  .form-control,.form-select{ min-height:46px; }
+  .page-title{ font-weight:700; color:var(--brand-dark); }
+  @media (max-width:576px){
+    .stat-value{ font-size:1.3rem; }
+    .table td,.table th{ font-size:.82rem; padding:.45rem .35rem; }
+  }
+  @media print{ body{ background:#fff; } .no-print{ display:none !important; } }
+</style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg sticky-top no-print">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="{{ url_for('dashboard') }}">
+      <i class="fa-solid fa-suitcase-medical me-1"></i> المخزون الطبي
+    </a>
+    <div class="d-flex align-items-center gap-2">
+      <a class="btn btn-sm btn-light position-relative" href="{{ url_for('alerts') }}">
+        <i class="fa-solid fa-bell"></i>
+        {% if alerts_count %}<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">{{ alerts_count }}</span>{% endif %}
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+    </div>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}"><i class="fa-solid fa-gauge me-1"></i>لوحة التحكم</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('medicines') }}"><i class="fa-solid fa-pills me-1"></i>إدارة الأدوية</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('add_batch') }}"><i class="fa-solid fa-boxes-packing me-1"></i>إدخال كمية</a></li>
+        {% if current_user.is_authenticated and current_user.role == 'admin' %}
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('inventory_report') }}"><i class="fa-solid fa-file-lines me-1"></i>التقارير</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('users') }}"><i class="fa-solid fa-users me-1"></i>إدارة المستخدمين</a></li>
+        {% endif %}
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket me-1"></i>تسجيل الخروج</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-3">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show no-print py-2">{{ message }}
+        <button class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+{% extends "base.html" %}
+{% block title %}شحنات {{ med.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h5 class="page-title mb-0"><i class="fa-solid fa-boxes-stacked me-1"></i> شحنات: {{ med.name }}</h5>
+  <a href="{{ url_for('add_batch', medicine_id=med.id) }}" class="btn btn-brand btn-sm"><i class="fa-solid fa-plus"></i> شحنة</a>
+</div>
+<div class="alert alert-light border py-2 small">
+  الكمية الحالية: <strong>{{ med.total_quantity }}</strong> — الحد الأدنى: <strong>{{ med.min_stock }}</strong>
+</div>
+<div class="card p-2">
+  <div class="table-responsive">
+    <table class="table table-striped mb-0">
+      <thead>
+        <tr><th>#</th><th class="text-center">الكمية</th><th class="text-center">الصلاحية</th><th class="text-center">الحالة</th><th class="text-center">إجراءات</th></tr>
+      </thead>
+      <tbody>
+        {% for b in med.batches %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td class="text-center">{{ b.quantity }}</td>
+          <td class="text-center">{{ b.expire_date.strftime('%d-%m-%Y') if b.expire_date else '-' }}</td>
+          <td class="text-center">
+            {% if b.quantity == 0 %}<span class="badge bg-secondary">منتهية الكمية</span>
+            {% elif b.is_expired %}<span class="badge bg-danger">منتهية الصلاحية</span>
+            {% elif b.is_near_expiry %}<span class="badge bg-info text-dark">قريبة الانتهاء</span>
+            {% else %}<span class="badge bg-success">سليمة</span>{% endif %}
+          </td>
+          <td class="text-center">
+            <div class="d-flex justify-content-center gap-1">
+              <a class="btn btn-sm btn-outline-secondary btn-icon" href="{{ url_for('edit_batch', batch_id=b.id) }}"><i class="fa-solid fa-pen"></i></a>
+              {% if current_user.role == 'admin' %}
+              <form method="post" action="{{ url_for('delete_batch', batch_id=b.id) }}" onsubmit="return confirm('حذف هذه الشحنة؟');">
+                <button class="btn btn-sm btn-outline-danger btn-icon"><i class="fa-solid fa-trash"></i></button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted py-3">لا توجد شحنات.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<a href="{{ url_for('medicines') }}" class="btn btn-outline-secondary btn-sm mt-3">رجوع للأدوية</a>
+{% endblock %}
+
+{% extends "base.html" %}
+{% block title %}لوحة التحكم - إدارة المخزون الطبي{% endblock %}
+{% block content %}
+<h5 class="page-title mb-3"><i class="fa-solid fa-gauge me-1"></i> لوحة التحكم</h5>
+
+<div class="row g-2 g-md-3">
+  <div class="col-6 col-md-4">
+    <div class="card stat-card p-3 text-center">
+      <div class="icon"><i class="fa-solid fa-pills"></i></div>
+      <div class="stat-value">{{ stats.medicines }}</div>
+      <div class="small text-muted">إجمالي الأدوية</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card stat-card p-3 text-center">
+      <div class="icon"><i class="fa-solid fa-cubes"></i></div>
+      <div class="stat-value">{{ stats.quantities }}</div>
+      <div class="small text-muted">إجمالي الكميات</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card stat-card p-3 text-center">
+      <div class="icon text-warning"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="stat-value">{{ stats.low }}</div>
+      <div class="small text-muted">مخزون منخفض</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card stat-card p-3 text-center">
+      <div class="icon text-danger"><i class="fa-solid fa-ban"></i></div>
+      <div class="stat-value">{{ stats.expired }}</div>
+      <div class="small text-muted">شحنات منتهية</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card stat-card p-3 text-center">
+      <div class="icon text-info"><i class="fa-solid fa-hourglass-half"></i></div>
+      <div class="stat-value">{{ stats.near }}</div>
+      <div class="small text-muted">قريبة من الانتهاء</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card stat-card p-3 text-center">
+      <div class="icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+      <div class="stat-value">{{ stats.batches }}</div>
+      <div class="small text-muted">الشحنات الموجودة</div>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mt-3">
+  <a href="{{ url_for('add_medicine') }}" class="btn btn-brand btn-sm"><i class="fa-solid fa-plus me-1"></i>إضافة دواء</a>
+  <a href="{{ url_for('add_batch') }}" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-boxes-packing me-1"></i>إدخال كمية</a>
+  <a href="{{ url_for('medicines') }}" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-pills me-1"></i>إدارة الأدوية</a>
+  {% if current_user.role == 'admin' %}
+  <a href="{{ url_for('inventory_report') }}" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-file-lines me-1"></i>التقرير</a>
+  {% endif %}
+</div>
+
+{% if low_list %}
+<div class="card mt-3 p-3">
+  <h6 class="fw-bold mb-2"><i class="fa-solid fa-triangle-exclamation text-warning me-1"></i>أدوية بمخزون منخفض</h6>
+  <ul class="list-group list-group-flush">
+    {% for m in low_list %}
+    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+      <span>{{ m.name }}</span>
+      <span class="badge bg-warning text-dark">{{ m.total_quantity }} / {{ m.min_stock }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}
+
+{% extends "base.html" %}
+{% block title %}إخراج كمية{% endblock %}
+{% block content %}
+<h5 class="page-title mb-3"><i class="fa-solid fa-minus me-1"></i> إخراج كمية - {{ med.name }}</h5>
+<div class="card p-3">
+  <div class="alert alert-light border py-2">الكمية الحالية: <strong>{{ med.total_quantity }}</strong></div>
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label">حدد الكمية المراد إخراجها</label>
+      <input type="number" name="quantity" class="form-control" min="1" max="{{ med.total_quantity }}" required autofocus>
+      <div class="form-text">يتم الخصم من الشحنة الأقدم صلاحية أولاً (FIFO).</div>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-danger"><i class="fa-solid fa-check me-1"></i>تأكيد الإخراج</button>
+      <a href="{{ url_for('medicines') }}" class="btn btn-outline-secondary">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% if med.active_batches %}
+<div class="card p-2 mt-3">
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>الشحنة</th><th class="text-center">الكمية</th><th class="text-center">الصلاحية</th></tr></thead>
+      <tbody>
+        {% for b in med.active_batches %}
+        <tr><td>{{ loop.index }}</td><td class="text-center">{{ b.quantity }}</td><td class="text-center">{{ b.expire_date.strftime('%d-%m-%Y') if b.expire_date else '-' }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% extends "base.html" %}
+{% block title %}تعديل شحنة{% endblock %}
+{% block content %}
+<h5 class="page-title mb-3"><i class="fa-solid fa-pen me-1"></i> تعديل شحنة - {{ batch.medicine.name }}</h5>
+<div class="card p-3">
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label">الكمية</label>
+      <input type="number" name="quantity" class="form-control" min="0" value="{{ batch.quantity }}" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">تاريخ انتهاء الصلاحية</label>
+      <input type="date" name="expire_date" class="form-control" value="{{ batch.expire_date.isoformat() if batch.expire_date }}" required>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-brand"><i class="fa-solid fa-floppy-disk me-1"></i>حفظ</button>
+      <a href="{{ url_for('medicine_batches', medicine_id=batch.medicine_id) }}" class="btn btn-outline-secondary">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% extends "base.html" %}
+{% block title %}تعديل دواء{% endblock %}
+{% block content %}
+<h5 class="page-title mb-3"><i class="fa-solid fa-pen me-1"></i> تعديل دواء</h5>
+<div class="card p-3">
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label">اسم الدواء</label>
+      <input type="text" name="name" class="form-control" value="{{ med.name }}" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">الحد الأدنى للمخزون</label>
+      <input type="number" name="min_stock" class="form-control" min="0" value="{{ med.min_stock }}" required>
+    </div>
+    <div class="alert alert-light border py-2 small mb-3">الكمية الحالية: <strong>{{ med.total_quantity }}</strong></div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-brand"><i class="fa-solid fa-floppy-disk me-1"></i>حفظ التعديلات</button>
+      <a href="{{ url_for('medicines') }}" class="btn btn-outline-secondary">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% extends "base.html" %}
+{% block title %}تعديل مستخدم{% endblock %}
+{% block content %}
+<h5 class="page-title mb-3"><i class="fa-solid fa-user-pen me-1"></i> تعديل مستخدم</h5>
+<div class="card p-3">
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label">اسم المستخدم</label>
+      <input type="text" name="username" class="form-control" value="{{ user.username }}" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">كلمة مرور جديدة (اتركها فارغة لعدم التغيير)</label>
+      <input type="password" name="password" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">تأكيد كلمة المرور</label>
+      <input type="password" name="confirm" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">الصلاحية</label>
+      <select name="role" class="form-select" {% if user.username == 'admin' %}disabled{% endif %}>
+        <option value="user" {% if user.role == 'user' %}selected{% endif %}>مستخدم</option>
+        <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>مدير</option>
+      </select>
+      {% if user.username == 'admin' %}
+      <input type="hidden" name="role" value="admin">
+      <div class="form-text">لا يمكن تغيير صلاحية المدير الرئيسي.</div>
+      {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-brand"><i class="fa-solid fa-floppy-disk me-1"></i>حفظ</button>
+      <a href="{{ url_for('users') }}" class="btn btn-outline-secondary">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% extends "base.html" %}
+{% block title %}تقرير المخزون الطبي{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="page-title mb-0"><i class="fa-solid fa-file-lines me-1"></i> تقرير المخزون الطبي</h5>
+  <a href="{{ url_for('inventory_report_print') }}" target="_blank" class="btn btn-brand btn-sm"><i class="fa-solid fa-print me-1"></i>طباعة التقرير</a>
+</div>
+
+<div class="card p-3 mb-3">
+  <div class="small text-muted">تاريخ التقرير: {{ r.date }}</div>
+  <div class="row g-2 mt-2">
+    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold">{{ r.total_medicines }}</div><div class="small text-muted">إجمالي الأدوية</div></div></div>
+    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold">{{ r.total_quantity }}</div><div class="small text-muted">إجمالي الكميات</div></div></div>
+    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold">{{ r.low|length }}</div><div class="small text-muted">مخزون منخفض</div></div></div>
+    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold">{{ r.near|length }}</div><div class="small text-muted">قريبة الانتهاء</div></div></div>
+    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold">{{ r.expired|length }}</div><div class="small text-muted">منتهية الصلاحية</div></div></div>
+  </div>
+</div>
+
+<div class="card p-2 mb-3">
+  <h6 class="fw-bold px-2 pt-2">جدول الأدوية والمخزون</h6>
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm mb-0">
+      <thead><tr><th>#</th><th>اسم الدواء</th><th class="text-center">الحد الأدنى</th><th class="text-center">الكمية الحالية</th></tr></thead>
+      <tbody>
+        {% for m in r.rows %}
+        <tr><td>{{ loop.index }}</td><td>{{ m.name }}</td><td class="text-center">{{ m.min_stock }}</td><td class="text-center">{{ m.total_quantity }}</td></tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-muted">لا توجد كميات في المخزون.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card p-2">
+  <h6 class="fw-bold px-2 pt-2">تفاصيل الشحنات والكميات</h6>
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm mb-0">
+      <thead><tr><th>#</th><th>اسم الدواء</th><th class="text-center">الكمية</th><th class="text-center">تاريخ الصلاحية</th></tr></thead>
+      <tbody>
+        {% for b in r.batch_rows %}
+        <tr><td>{{ loop.index }}</td><td>{{ b.medicine.name }}</td><td class="text-center">{{ b.quantity }}</td><td class="text-center">{{ b.expire_date.strftime('%d-%m-%Y') if b.expire_date else '-' }}</td></tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-muted">لا توجد شحنات بكميات.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تسجيل الدخول - إدارة المخزون الطبي</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+<style>
+  body{ background:#0f766e; font-family:"Segoe UI",Tahoma,sans-serif; }
+  .login-card{ border:0; border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,.2); }
+  .form-control{ min-height:48px; }
+  .btn-brand{ background:#0f766e; color:#fff; min-height:48px; }
+</style>
+</head>
+<body>
+<div class="container d-flex align-items-center justify-content-center" style="min-height:100vh">
+  <div class="col-12 col-sm-9 col-md-5">
+    <div class="card login-card p-4">
+      <div class="text-center mb-3">
+        <i class="fa-solid fa-suitcase-medical fa-2x" style="color:#0f766e"></i>
+        <h4 class="mt-2 fw-bold" style="color:#115e59">إدارة المخزون الطبي</h4>
+        <p class="text-muted small mb-0">الرجاء تسجيل الدخول للمتابعة</p>
+      </div>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} py-2">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">اسم المستخدم</label>
+          <input type="text" name="username" class="form-control" required autofocus>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">كلمة المرور</label>
+          <input type="password" name="password" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-brand w-100 fw-bold">تسجيل الدخول</button>
+      </form>
+    </div>
+  </div>
+</div>
+</body>
+</html>
+
+{% extends "base.html" %}
+{% block title %}إدارة الأدوية - إدارة المخزون الطبي{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h5 class="page-title mb-0"><i class="fa-solid fa-pills me-1"></i> إدارة الأدوية</h5>
+  <a href="{{ url_for('add_medicine') }}" class="btn btn-brand btn-sm"><i class="fa-solid fa-plus"></i> دواء</a>
+</div>
+
+<form class="mb-3" method="get">
+  <div class="input-group">
+    <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="ابحث باسم الدواء">
+    <button class="btn btn-outline-secondary"><i class="fa-solid fa-magnifying-glass"></i></button>
+  </div>
+</form>
+
+<div class="card p-2">
+  <div class="table-responsive">
+    <table class="table table-striped align-middle mb-0">
+      <thead>
+        <tr>
+          <th>اسم الدواء</th>
+          <th class="text-center">الكمية</th>
+          <th class="text-center">الحد الأدنى</th>
+          <th class="text-center">الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in medicines %}
+        <tr>
+          <td>
+            <div class="fw-semibold">{{ m.name }}</div>
+            {% if m.nearest_expire %}<div class="small text-muted">أقرب انتهاء: {{ m.nearest_expire.strftime('%d-%m-%Y') }}</div>{% endif %}
+          </td>
+          <td class="text-center">
+            <span class="badge {% if m.is_low %}bg-warning text-dark{% else %}bg-success{% endif %}">{{ m.total_quantity }}</span>
+          </td>
+          <td class="text-center">{{ m.min_stock }}</td>
+          <td class="text-center">
+            <div class="d-flex justify-content-center gap-1 flex-wrap">
+              <a class="btn btn-sm btn-success btn-icon" href="{{ url_for('add_batch', medicine_id=m.id) }}" title="إدخال كمية"><i class="fa-solid fa-plus"></i></a>
+              <a class="btn btn-sm btn-danger btn-icon" href="{{ url_for('dispense', medicine_id=m.id) }}" title="إخراج كمية"><i class="fa-solid fa-minus"></i></a>
+              <a class="btn btn-sm btn-outline-primary btn-icon" href="{{ url_for('medicine_batches', medicine_id=m.id) }}" title="الشحنات"><i class="fa-solid fa-boxes-stacked"></i></a>
+              <a class="btn btn-sm btn-outline-secondary btn-icon" href="{{ url_for('edit_medicine', medicine_id=m.id) }}" title="تعديل"><i class="fa-solid fa-pen"></i></a>
+              {% if current_user.role == 'admin' %}
+              <form method="post" action="{{ url_for('delete_medicine', medicine_id=m.id) }}" onsubmit="return confirm('حذف الدواء وجميع شحناته؟');">
+                <button class="btn btn-sm btn-outline-danger btn-icon" title="حذف"><i class="fa-solid fa-trash"></i></button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-muted py-3">لا توجد أدوية مسجلة.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تقرير المخزون الطبي</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  *{ box-sizing:border-box; }
+  body{ font-family:"Times New Roman",Tahoma,serif; color:#111; margin:0; padding:16px; background:#fff; }
+  .head{ text-align:center; border-bottom:3px double #111; padding-bottom:8px; margin-bottom:12px; }
+  .head h1{ font-size:22px; margin:0 0 6px; }
+  .head .date{ font-size:13px; }
+  h2{ font-size:15px; margin:18px 0 6px; border-right:5px solid #111; padding-right:8px; }
+  table{ width:100%; border-collapse:collapse; margin-bottom:10px; }
+  th,td{ border:1px solid #333; padding:5px 6px; font-size:12.5px; }
+  th{ background:#e9eef0; }
+  td.c,th.c{ text-align:center; }
+  .summary td{ font-size:13px; }
+  .footer{ margin-top:18px; border-top:1px solid #333; padding-top:6px; font-size:11.5px; display:flex; justify-content:space-between; }
+  .btns{ text-align:center; margin-bottom:14px; }
+  .btns button,.btns a{ padding:8px 16px; font-size:14px; border:1px solid #333; background:#f3f3f3; text-decoration:none; color:#111; border-radius:6px; cursor:pointer; }
+  @media print { .btns{ display:none !important; } body{ padding:0; } }
+</style>
+</head>
+<body>
+
+<div class="btns">
+  <button onclick="window.print()">طباعة / حفظ PDF</button>
+  <a href="{{ url_for('inventory_report') }}">رجوع</a>
+</div>
+
+<div class="head">
+  <h1>تقرير المخزون الطبي</h1>
+  <div class="date">تاريخ التقرير: {{ r.date }}</div>
+</div>
+
+<h2>ملخص عام</h2>
+<table class="summary">
+  <tr><th>إجمالي الأدوية</th><td class="c">{{ r.total_medicines }}</td><th>إجمالي الكميات</th><td class="c">{{ r.total_quantity }}</td></tr>
+  <tr><th>أدوية منخفضة المخزون</th><td class="c">{{ r.low|length }}</td><th>شحنات قريبة من انتهاء الصلاحية</th><td class="c">{{ r.near|length }}</td></tr>
+  <tr><th>شحنات منتهية الصلاحية</th><td class="c">{{ r.expired|length }}</td><th>عدد الشحنات الموجودة</th><td class="c">{{ r.batch_rows|length }}</td></tr>
+</table>
+
+<h2>جدول الأدوية والمخزون</h2>
+<table>
+  <thead><tr><th class="c">#</th><th>اسم الدواء</th><th class="c">الحد الأدنى</th><th class="c">الكمية الحالية</th></tr></thead>
+  <tbody>
+    {% for m in r.rows %}
+    <tr><td class="c">{{ loop.index }}</td><td>{{ m.name }}</td><td class="c">{{ m.min_stock }}</td><td class="c">{{ m.total_quantity }}</td></tr>
+    {% else %}
+    <tr><td colspan="4" class="c">لا توجد كميات في المخزون.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>تفاصيل الشحنات والكميات</h2>
+<table>
+  <thead><tr><th class="c">#</th><th>اسم الدواء</th><th class="c">الكمية</th><th class="c">تاريخ الصلاحية</th></tr></thead>
+  <tbody>
+    {% for b in r.batch_rows %}
+    <tr><td class="c">{{ loop.index }}</td><td>{{ b.medicine.name }}</td><td class="c">{{ b.quantity }}</td><td class="c">{{ b.expire_date.strftime('%d-%m-%Y') if b.expire_date else '-' }}</td></tr>
+    {% else %}
+    <tr><td colspan="4" class="c">لا توجد شحنات بكميات.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if r.low %}
+<h2>أدوية منخفضة المخزون</h2>
+<table>
+  <thead><tr><th class="c">#</th><th>اسم الدواء</th><th class="c">الحد الأدنى</th><th class="c">الكمية الحالية</th></tr></thead>
+  <tbody>
+    {% for m in r.low %}
+    <tr><td class="c">{{ loop.index }}</td><td>{{ m.name }}</td><td class="c">{{ m.min_stock }}</td><td class="c">{{ m.total_quantity }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<div class="footer">
+  <span>نظام إدارة المخزون الطبي</span>
+  <span>التوقيع: ..............................</span>
+</div>
+</body>
+</html>
+
+{% extends "base.html" %}
+{% block title %}إدارة المستخدمين{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h5 class="page-title mb-0"><i class="fa-solid fa-users me-1"></i> إدارة المستخدمين</h5>
+  <a href="{{ url_for('add_user') }}" class="btn btn-brand btn-sm"><i class="fa-solid fa-plus"></i> مستخدم</a>
+</div>
+<div class="card p-2">
+  <div class="table-responsive">
+    <table class="table table-striped mb-0">
+      <thead><tr><th>اسم المستخدم</th><th class="text-center">الصلاحية</th><th class="text-center">إجراءات</th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ u.username }}</td>
+          <td class="text-center"><span class="badge {% if u.role == 'admin' %}bg-primary{% else %}bg-secondary{% endif %}">{{ u.role_label }}</span></td>
+          <td class="text-center">
+            <div class="d-flex justify-content-center gap-1">
+              <a class="btn btn-sm btn-outline-secondary btn-icon" href="{{ url_for('edit_user', user_id=u.id) }}"><i class="fa-solid fa-pen"></i></a>
+              {% if u.username != 'admin' %}
+              <form method="post" action="{{ url_for('delete_user', user_id=u.id) }}" onsubmit="return confirm('حذف هذا المستخدم؟');">
+                <button class="btn btn-sm btn-outline-danger btn-icon"><i class="fa-solid fa-trash"></i></button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

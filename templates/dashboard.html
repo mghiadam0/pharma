@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}لوحة التحكم - إدارة المخزون الطبي{% endblock %}
+{% block content %}
+<h5 class="page-title mb-3"><i class="fa-solid fa-gauge me-1"></i> لوحة التحكم</h5>
+
+<div class="row g-2 g-md-3">
+  <div class="col-6 col-md-4">
+    <div class="card stat-card p-3 text-center">
+      <div class="icon"><i class="fa-solid fa-pills"></i></div>
+      <div class="stat-value">{{ stats.medicines }}</div>
+      <div class="small text-muted">إجمالي الأدوية</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card stat-card p-3 text-center">
+      <div class="icon"><i class="fa-solid fa-cubes"></i></div>
+      <div class="stat-value">{{ stats.quantities }}</div>
+      <div class="small text-muted">إجمالي الكميات</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card stat-card p-3 text-center">
+      <div class="icon text-warning"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div class="stat-value">{{ stats.low }}</div>
+      <div class="small text-muted">مخزون منخفض</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card stat-card p-3 text-center">
+      <div class="icon text-danger"><i class="fa-solid fa-ban"></i></div>
+      <div class="stat-value">{{ stats.expired }}</div>
+      <div class="small text-muted">شحنات منتهية</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card stat-card p-3 text-center">
+      <div class="icon text-info"><i class="fa-solid fa-hourglass-half"></i></div>
+      <div class="stat-value">{{ stats.near }}</div>
+      <div class="small text-muted">قريبة من الانتهاء</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4">
+    <div class="card stat-card p-3 text-center">
+      <div class="icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+      <div class="stat-value">{{ stats.batches }}</div>
+      <div class="small text-muted">الشحنات الموجودة</div>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mt-3">
+  <a href="{{ url_for('add_medicine') }}" class="btn btn-brand btn-sm"><i class="fa-solid fa-plus me-1"></i>إضافة دواء</a>
+  <a href="{{ url_for('add_batch') }}" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-boxes-packing me-1"></i>إدخال كمية</a>
+  <a href="{{ url_for('medicines') }}" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-pills me-1"></i>إدارة الأدوية</a>
+  {% if current_user.role == 'admin' %}
+  <a href="{{ url_for('inventory_report') }}" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-file-lines me-1"></i>التقرير</a>
+  {% endif %}
+</div>
+
+{% if low_list %}
+<div class="card mt-3 p-3">
+  <h6 class="fw-bold mb-2"><i class="fa-solid fa-triangle-exclamation text-warning me-1"></i>أدوية بمخزون منخفض</h6>
+  <ul class="list-group list-group-flush">
+    {% for m in low_list %}
+    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+      <span>{{ m.name }}</span>
+      <span class="badge bg-warning text-dark">{{ m.total_quantity }} / {{ m.min_stock }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}
+

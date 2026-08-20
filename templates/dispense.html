@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}إخراج كمية{% endblock %}
+{% block content %}
+<h5 class="page-title mb-3"><i class="fa-solid fa-minus me-1"></i> إخراج كمية - {{ med.name }}</h5>
+<div class="card p-3">
+  <div class="alert alert-light border py-2">الكمية الحالية: <strong>{{ med.total_quantity }}</strong></div>
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label">حدد الكمية المراد إخراجها</label>
+      <input type="number" name="quantity" class="form-control" min="1" max="{{ med.total_quantity }}" required autofocus>
+      <div class="form-text">يتم الخصم من الشحنة الأقدم صلاحية أولاً (FIFO).</div>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-danger"><i class="fa-solid fa-check me-1"></i>تأكيد الإخراج</button>
+      <a href="{{ url_for('medicines') }}" class="btn btn-outline-secondary">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% if med.active_batches %}
+<div class="card p-2 mt-3">
+  <div class="table-responsive">
+    <table class="table table-sm mb-0">
+      <thead><tr><th>الشحنة</th><th class="text-center">الكمية</th><th class="text-center">الصلاحية</th></tr></thead>
+      <tbody>
+        {% for b in med.active_batches %}
+        <tr><td>{{ loop.index }}</td><td class="text-center">{{ b.quantity }}</td><td class="text-center">{{ b.expire_date.strftime('%d-%m-%Y') if b.expire_date else '-' }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+

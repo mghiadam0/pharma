@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تقرير المخزون الطبي</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  *{ box-sizing:border-box; }
+  body{ font-family:"Times New Roman",Tahoma,serif; color:#111; margin:0; padding:16px; background:#fff; }
+  .head{ text-align:center; border-bottom:3px double #111; padding-bottom:8px; margin-bottom:12px; }
+  .head h1{ font-size:22px; margin:0 0 6px; }
+  .head .date{ font-size:13px; }
+  h2{ font-size:15px; margin:18px 0 6px; border-right:5px solid #111; padding-right:8px; }
+  table{ width:100%; border-collapse:collapse; margin-bottom:10px; }
+  th,td{ border:1px solid #333; padding:5px 6px; font-size:12.5px; }
+  th{ background:#e9eef0; }
+  td.c,th.c{ text-align:center; }
+  .summary td{ font-size:13px; }
+  .footer{ margin-top:18px; border-top:1px solid #333; padding-top:6px; font-size:11.5px; display:flex; justify-content:space-between; }
+  .btns{ text-align:center; margin-bottom:14px; }
+  .btns button,.btns a{ padding:8px 16px; font-size:14px; border:1px solid #333; background:#f3f3f3; text-decoration:none; color:#111; border-radius:6px; cursor:pointer; }
+  @media print { .btns{ display:none !important; } body{ padding:0; } }
+</style>
+</head>
+<body>
+
+<div class="btns">
+  <button onclick="window.print()">طباعة / حفظ PDF</button>
+  <a href="{{ url_for('inventory_report') }}">رجوع</a>
+</div>
+
+<div class="head">
+  <h1>تقرير المخزون الطبي</h1>
+  <div class="date">تاريخ التقرير: {{ r.date }}</div>
+</div>
+
+<h2>ملخص عام</h2>
+<table class="summary">
+  <tr><th>إجمالي الأدوية</th><td class="c">{{ r.total_medicines }}</td><th>إجمالي الكميات</th><td class="c">{{ r.total_quantity }}</td></tr>
+  <tr><th>أدوية منخفضة المخزون</th><td class="c">{{ r.low|length }}</td><th>شحنات قريبة من انتهاء الصلاحية</th><td class="c">{{ r.near|length }}</td></tr>
+  <tr><th>شحنات منتهية الصلاحية</th><td class="c">{{ r.expired|length }}</td><th>عدد الشحنات الموجودة</th><td class="c">{{ r.batch_rows|length }}</td></tr>
+</table>
+
+<h2>جدول الأدوية والمخزون</h2>
+<table>
+  <thead><tr><th class="c">#</th><th>اسم الدواء</th><th class="c">الحد الأدنى</th><th class="c">الكمية الحالية</th></tr></thead>
+  <tbody>
+    {% for m in r.rows %}
+    <tr><td class="c">{{ loop.index }}</td><td>{{ m.name }}</td><td class="c">{{ m.min_stock }}</td><td class="c">{{ m.total_quantity }}</td></tr>
+    {% else %}
+    <tr><td colspan="4" class="c">لا توجد كميات في المخزون.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>تفاصيل الشحنات والكميات</h2>
+<table>
+  <thead><tr><th class="c">#</th><th>اسم الدواء</th><th class="c">الكمية</th><th class="c">تاريخ الصلاحية</th></tr></thead>
+  <tbody>
+    {% for b in r.batch_rows %}
+    <tr><td class="c">{{ loop.index }}</td><td>{{ b.medicine.name }}</td><td class="c">{{ b.quantity }}</td><td class="c">{{ b.expire_date.strftime('%d-%m-%Y') if b.expire_date else '-' }}</td></tr>
+    {% else %}
+    <tr><td colspan="4" class="c">لا توجد شحنات بكميات.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if r.low %}
+<h2>أدوية منخفضة المخزون</h2>
+<table>
+  <thead><tr><th class="c">#</th><th>اسم الدواء</th><th class="c">الحد الأدنى</th><th class="c">الكمية الحالية</th></tr></thead>
+  <tbody>
+    {% for m in r.low %}
+    <tr><td class="c">{{ loop.index }}</td><td>{{ m.name }}</td><td class="c">{{ m.min_stock }}</td><td class="c">{{ m.total_quantity }}</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<div class="footer">
+  <span>نظام إدارة المخزون الطبي</span>
+  <span>التوقيع: ..............................</span>
+</div>
+</body>
+</html>
+

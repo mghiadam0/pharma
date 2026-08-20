@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}إضافة مستخدم{% endblock %}
+{% block content %}
+<h5 class="page-title mb-3"><i class="fa-solid fa-user-plus me-1"></i> إضافة مستخدم</h5>
+<div class="card p-3">
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label">اسم المستخدم</label>
+      <input type="text" name="username" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">كلمة المرور</label>
+      <input type="password" name="password" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">تأكيد كلمة المرور</label>
+      <input type="password" name="confirm" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">الصلاحية</label>
+      <select name="role" class="form-select">
+        <option value="user">مستخدم</option>
+        <option value="admin">مدير</option>
+      </select>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-brand"><i class="fa-solid fa-floppy-disk me-1"></i>حفظ</button>
+      <a href="{{ url_for('users') }}" class="btn btn-outline-secondary">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}تعديل مستخدم{% endblock %}
+{% block content %}
+<h5 class="page-title mb-3"><i class="fa-solid fa-user-pen me-1"></i> تعديل مستخدم</h5>
+<div class="card p-3">
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label">اسم المستخدم</label>
+      <input type="text" name="username" class="form-control" value="{{ user.username }}" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">كلمة مرور جديدة (اتركها فارغة لعدم التغيير)</label>
+      <input type="password" name="password" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">تأكيد كلمة المرور</label>
+      <input type="password" name="confirm" class="form-control">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">الصلاحية</label>
+      <select name="role" class="form-select" {% if user.username == 'admin' %}disabled{% endif %}>
+        <option value="user" {% if user.role == 'user' %}selected{% endif %}>مستخدم</option>
+        <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>مدير</option>
+      </select>
+      {% if user.username == 'admin' %}
+      <input type="hidden" name="role" value="admin">
+      <div class="form-text">لا يمكن تغيير صلاحية المدير الرئيسي.</div>
+      {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-brand"><i class="fa-solid fa-floppy-disk me-1"></i>حفظ</button>
+      <a href="{{ url_for('users') }}" class="btn btn-outline-secondary">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

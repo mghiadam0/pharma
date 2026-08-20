@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}إدارة المستخدمين{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h5 class="page-title mb-0"><i class="fa-solid fa-users me-1"></i> إدارة المستخدمين</h5>
+  <a href="{{ url_for('add_user') }}" class="btn btn-brand btn-sm"><i class="fa-solid fa-plus"></i> مستخدم</a>
+</div>
+<div class="card p-2">
+  <div class="table-responsive">
+    <table class="table table-striped mb-0">
+      <thead><tr><th>اسم المستخدم</th><th class="text-center">الصلاحية</th><th class="text-center">إجراءات</th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ u.username }}</td>
+          <td class="text-center"><span class="badge {% if u.role == 'admin' %}bg-primary{% else %}bg-secondary{% endif %}">{{ u.role_label }}</span></td>
+          <td class="text-center">
+            <div class="d-flex justify-content-center gap-1">
+              <a class="btn btn-sm btn-outline-secondary btn-icon" href="{{ url_for('edit_user', user_id=u.id) }}"><i class="fa-solid fa-pen"></i></a>
+              {% if u.username != 'admin' %}
+              <form method="post" action="{{ url_for('delete_user', user_id=u.id) }}" onsubmit="return confirm('حذف هذا المستخدم؟');">
+                <button class="btn btn-sm btn-outline-danger btn-icon"><i class="fa-solid fa-trash"></i></button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

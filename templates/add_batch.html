@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}إدخال كمية{% endblock %}
+{% block content %}
+<h5 class="page-title mb-3"><i class="fa-solid fa-boxes-packing me-1"></i> إدخال كمية (شحنة جديدة)</h5>
+<div class="card p-3">
+  {% if medicines %}
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label">الدواء</label>
+      <select name="medicine_id" class="form-select" required>
+        <option value="">-- اختر الدواء --</option>
+        {% for m in medicines %}
+        <option value="{{ m.id }}" {% if selected == m.id %}selected{% endif %}>{{ m.name }} (الكمية: {{ m.total_quantity }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">الكمية</label>
+      <input type="number" name="quantity" class="form-control" min="1" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">تاريخ انتهاء الصلاحية</label>
+      <input type="date" name="expire_date" class="form-control" required>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-brand"><i class="fa-solid fa-check me-1"></i>تأكيد الإدخال</button>
+      <a href="{{ url_for('medicines') }}" class="btn btn-outline-secondary">إلغاء</a>
+    </div>
+  </form>
+  {% else %}
+  <p class="text-muted mb-2">لا توجد أدوية بعد. أضف دواءً أولاً.</p>
+  <a href="{{ url_for('add_medicine') }}" class="btn btn-brand btn-sm">إضافة دواء</a>
+  {% endif %}
+</div>
+{% endblock %}
+

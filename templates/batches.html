@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}شحنات {{ med.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h5 class="page-title mb-0"><i class="fa-solid fa-boxes-stacked me-1"></i> شحنات: {{ med.name }}</h5>
+  <a href="{{ url_for('add_batch', medicine_id=med.id) }}" class="btn btn-brand btn-sm"><i class="fa-solid fa-plus"></i> شحنة</a>
+</div>
+<div class="alert alert-light border py-2 small">
+  الكمية الحالية: <strong>{{ med.total_quantity }}</strong> — الحد الأدنى: <strong>{{ med.min_stock }}</strong>
+</div>
+<div class="card p-2">
+  <div class="table-responsive">
+    <table class="table table-striped mb-0">
+      <thead>
+        <tr><th>#</th><th class="text-center">الكمية</th><th class="text-center">الصلاحية</th><th class="text-center">الحالة</th><th class="text-center">إجراءات</th></tr>
+      </thead>
+      <tbody>
+        {% for b in med.batches %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td class="text-center">{{ b.quantity }}</td>
+          <td class="text-center">{{ b.expire_date.strftime('%d-%m-%Y') if b.expire_date else '-' }}</td>
+          <td class="text-center">
+            {% if b.quantity == 0 %}<span class="badge bg-secondary">منتهية الكمية</span>
+            {% elif b.is_expired %}<span class="badge bg-danger">منتهية الصلاحية</span>
+            {% elif b.is_near_expiry %}<span class="badge bg-info text-dark">قريبة الانتهاء</span>
+            {% else %}<span class="badge bg-success">سليمة</span>{% endif %}
+          </td>
+          <td class="text-center">
+            <div class="d-flex justify-content-center gap-1">
+              <a class="btn btn-sm btn-outline-secondary btn-icon" href="{{ url_for('edit_batch', batch_id=b.id) }}"><i class="fa-solid fa-pen"></i></a>
+              {% if current_user.role == 'admin' %}
+              <form method="post" action="{{ url_for('delete_batch', batch_id=b.id) }}" onsubmit="return confirm('حذف هذه الشحنة؟');">
+                <button class="btn btn-sm btn-outline-danger btn-icon"><i class="fa-solid fa-trash"></i></button>
+              </form>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center text-muted py-3">لا توجد شحنات.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<a href="{{ url_for('medicines') }}" class="btn btn-outline-secondary btn-sm mt-3">رجوع للأدوية</a>
+{% endblock %}
+

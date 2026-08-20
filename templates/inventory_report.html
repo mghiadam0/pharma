@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}تقرير المخزون الطبي{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h5 class="page-title mb-0"><i class="fa-solid fa-file-lines me-1"></i> تقرير المخزون الطبي</h5>
+  <a href="{{ url_for('inventory_report_print') }}" target="_blank" class="btn btn-brand btn-sm"><i class="fa-solid fa-print me-1"></i>طباعة التقرير</a>
+</div>
+
+<div class="card p-3 mb-3">
+  <div class="small text-muted">تاريخ التقرير: {{ r.date }}</div>
+  <div class="row g-2 mt-2">
+    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold">{{ r.total_medicines }}</div><div class="small text-muted">إجمالي الأدوية</div></div></div>
+    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold">{{ r.total_quantity }}</div><div class="small text-muted">إجمالي الكميات</div></div></div>
+    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold">{{ r.low|length }}</div><div class="small text-muted">مخزون منخفض</div></div></div>
+    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold">{{ r.near|length }}</div><div class="small text-muted">قريبة الانتهاء</div></div></div>
+    <div class="col-6 col-md-3"><div class="border rounded p-2 text-center"><div class="fw-bold">{{ r.expired|length }}</div><div class="small text-muted">منتهية الصلاحية</div></div></div>
+  </div>
+</div>
+
+<div class="card p-2 mb-3">
+  <h6 class="fw-bold px-2 pt-2">جدول الأدوية والمخزون</h6>
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm mb-0">
+      <thead><tr><th>#</th><th>اسم الدواء</th><th class="text-center">الحد الأدنى</th><th class="text-center">الكمية الحالية</th></tr></thead>
+      <tbody>
+        {% for m in r.rows %}
+        <tr><td>{{ loop.index }}</td><td>{{ m.name }}</td><td class="text-center">{{ m.min_stock }}</td><td class="text-center">{{ m.total_quantity }}</td></tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-muted">لا توجد كميات في المخزون.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card p-2">
+  <h6 class="fw-bold px-2 pt-2">تفاصيل الشحنات والكميات</h6>
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm mb-0">
+      <thead><tr><th>#</th><th>اسم الدواء</th><th class="text-center">الكمية</th><th class="text-center">تاريخ الصلاحية</th></tr></thead>
+      <tbody>
+        {% for b in r.batch_rows %}
+        <tr><td>{{ loop.index }}</td><td>{{ b.medicine.name }}</td><td class="text-center">{{ b.quantity }}</td><td class="text-center">{{ b.expire_date.strftime('%d-%m-%Y') if b.expire_date else '-' }}</td></tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-muted">لا توجد شحنات بكميات.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
