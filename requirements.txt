@@ -1,0 +1,9 @@
+cat << 'EOF' > requirements.txt
+Flask
+SQLAlchemy
+Flask-SQLAlchemy
+Flask-Login
+Werkzeug
+Gunicorn
+EOF
+
