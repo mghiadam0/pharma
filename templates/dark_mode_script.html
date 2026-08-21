@@ -1,0 +1,20 @@
+<style>
+    body { background-color: #f8f9fa; color: #212529; transition: background-color 0.3s, color 0.3s; }
+    body.dark-mode { background-color: #121212; color: #e0e0e0; }
+    body.dark-mode .card, body.dark-mode .table { background-color: #1e1e1e !important; color: #e0e0e0 !important; border-color: #333 !important; }
+    body.dark-mode .form-control { background-color: #2d2d2d !important; color: #fff !important; }
+</style>
+
+<button onclick="toggleDarkMode()" id="darkModeBtn" style="position:fixed; top:10px; right:10px; z-index:1000;">
+    🌙
+</button>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (localStorage.getItem("theme") === "dark") document.body.classList.add("dark-mode");
+    });
+    function toggleDarkMode() {
+        document.body.classList.toggle("dark-mode");
+        localStorage.setItem("theme", document.body.classList.contains("dark-mode") ? "dark" : "light");
+    }
+</script>

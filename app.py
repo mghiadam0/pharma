@@ -19,8 +19,48 @@ NEAR_EXPIRY_DAYS = 180
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "medical-inventory-secret-key"
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + DB_PATH
+
+# ================================================================
+# 🔥 التغيير الأساسي: دعم SQLite محلياً و PostgreSQL (Supabase)
+# ================================================================
+
+# جلب رابط قاعدة البيانات من متغير البيئة (إن وجد)
+database_url = os.environ.get('DATABASE_URL')
+
+if database_url:
+    # تصحيح الرابط: postgres:// → postgresql://
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    
+    # إضافة sslmode=require إن لم يكن موجوداً
+    if 'sslmode' not in database_url:
+        if '?' in database_url:
+            database_url += '&sslmode=require'
+        else:
+            database_url += '?sslmode=require'
+    
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+    print("✅ باستخدام قاعدة بيانات PostgreSQL (Supabase)")
+else:
+    # استخدام SQLite محلياً (للتطوير على Termux)
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + DB_PATH
+    print("✅ باستخدام قاعدة بيانات SQLite محلية")
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# ================================================================
+# إعدادات إضافية لتحسين أداء الاتصال بـ PostgreSQL
+# ================================================================
+
+if database_url:
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_size': 5,          # عدد الاتصالات النشطة
+        'max_overflow': 10,      # اتصالات إضافية عند الحاجة
+        'pool_timeout': 30,      # وقت انتظار الاتصال
+        'pool_recycle': 1800,    # إعادة تعيين الاتصال كل 30 دقيقة
+    }
+
+# ================================================================
 
 db = SQLAlchemy(app)
 
@@ -31,7 +71,7 @@ login_manager.login_message_category = "warning"
 
 
 # ------------------------------------------------------------------
-# النماذج
+# النماذج (لم تتغير)
 # ------------------------------------------------------------------
 class User(UserMixin, db.Model):
     __tablename__ = "user"
@@ -105,7 +145,7 @@ def load_user(user_id):
 
 
 # ------------------------------------------------------------------
-# الصلاحيات
+# الصلاحيات (لم تتغير)
 # ------------------------------------------------------------------
 def admin_required(view_function):
     @wraps(view_function)
@@ -120,7 +160,7 @@ def admin_required(view_function):
 
 
 # ------------------------------------------------------------------
-# أدوات مساعدة
+# أدوات مساعدة (لم تتغير)
 # ------------------------------------------------------------------
 def parse_int(value, default=0):
     try:
@@ -183,7 +223,7 @@ def inject_globals():
 
 
 # ------------------------------------------------------------------
-# المصادقة
+# المصادقة (لم تتغير)
 # ------------------------------------------------------------------
 @app.route("/")
 def home():
@@ -218,7 +258,7 @@ def logout():
 
 
 # ------------------------------------------------------------------
-# لوحة التحكم
+# لوحة التحكم (لم تتغير)
 # ------------------------------------------------------------------
 @app.route("/dashboard")
 @login_required
@@ -248,7 +288,7 @@ def alerts():
 
 
 # ------------------------------------------------------------------
-# الأدوية
+# الأدوية (لم تتغير)
 # ------------------------------------------------------------------
 @app.route("/medicines")
 @login_required
@@ -323,7 +363,7 @@ def medicine_batches(medicine_id):
 
 
 # ------------------------------------------------------------------
-# الشحنات - إدخال
+# الشحنات - إدخال (لم تتغير)
 # ------------------------------------------------------------------
 @app.route("/batches/add", methods=["GET", "POST"])
 @login_required
@@ -384,7 +424,7 @@ def delete_batch(batch_id):
 
 
 # ------------------------------------------------------------------
-# إخراج كمية (FIFO)
+# إخراج كمية (FIFO) (لم تتغير)
 # ------------------------------------------------------------------
 @app.route("/medicines/<int:medicine_id>/dispense", methods=["GET", "POST"])
 @login_required
@@ -417,7 +457,7 @@ def dispense(medicine_id):
 
 
 # ------------------------------------------------------------------
-# التقارير - للمدير فقط
+# التقارير - للمدير فقط (لم تتغير)
 # ------------------------------------------------------------------
 def build_report():
     today = date.today()
@@ -455,7 +495,7 @@ def inventory_report_print():
 
 
 # ------------------------------------------------------------------
-# إدارة المستخدمين - للمدير فقط
+# إدارة المستخدمين - للمدير فقط (لم تتغير)
 # ------------------------------------------------------------------
 @app.route("/users")
 @admin_required
@@ -537,7 +577,7 @@ def delete_user(user_id):
 
 
 # ------------------------------------------------------------------
-# تهيئة وترقية قاعدة البيانات
+# 🔥 تغيير مهم: تهيئة وترقية قاعدة البيانات
 # ------------------------------------------------------------------
 def upgrade_database():
     """إضافة عمود role للقواعد القديمة بدون فقدان أي بيانات."""
@@ -557,22 +597,37 @@ def upgrade_database():
 
 
 def init_db():
-    upgrade_database()
+    """تهيئة قاعدة البيانات وإنشاء المستخدم admin إن لم يكن موجوداً."""
     with app.app_context():
+        # إنشاء الجداول (تعمل مع SQLite و PostgreSQL)
         db.create_all()
+        
+        # التحقق من وجود مستخدم admin
         admin = User.query.filter_by(username="admin").first()
         if not admin:
-            db.session.add(User(username="admin",
-                                password=generate_password_hash("admin123"),
-                                role="admin"))
+            admin = User(
+                username="admin",
+                password=generate_password_hash("admin123"),
+                role="admin"
+            )
+            db.session.add(admin)
             db.session.commit()
+            print("✅ تم إنشاء مستخدم admin")
         elif admin.role != "admin":
             admin.role = "admin"
             db.session.commit()
+            print("✅ تم تحديث صلاحية admin")
 
 
+# ================================================================
+# 🔥 تشغيل التطبيق مع تهيئة القاعدة
+# ================================================================
+
+# ترقية قاعدة SQLite القديمة (إن وجدت)
+upgrade_database()
+
+# تهيئة قاعدة البيانات (إنشاء الجداول والمستخدم admin)
 init_db()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)
-
